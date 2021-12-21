@@ -19,10 +19,6 @@ interface MenuContextValue {
   menu: string[];
   changeMenu(menuType: string | null): void;
 }
-// export type MenuContextValue = {
-//   menu: string[];
-//   changeMenu: (menuType: string) => void;
-// }
 
 const MenuContext = createContext<MenuContextValue>({
   menu: MENUS.basic,
