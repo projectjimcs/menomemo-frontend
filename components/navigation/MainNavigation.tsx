@@ -10,6 +10,7 @@ import Box from '@mui/material/Box';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
+import { useMenu } from '../../contexts/MenuContext';
 
 const links = ['Login', 'Bookings', 'Patients'];
 const settings = ['Profile', 'Company', 'Logout'];
@@ -17,6 +18,7 @@ const settings = ['Profile', 'Company', 'Logout'];
 function MainNavigation() {
     const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
     const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+    const { menu } = useMenu();
   
     const handleOpenNavMenu = (event: MouseEvent<HTMLElement>) => {
       setAnchorElNav(event.currentTarget);
@@ -77,7 +79,7 @@ function MainNavigation() {
                                     display: { xs: 'block', md: 'none' },
                                 }}
                             >
-                            {links.map((link) => (
+                            {menu.map((link) => (
                                 <MenuItem key={link} onClick={handleCloseNavMenu}>
                                 <Typography textAlign="center">{link}</Typography>
                                 </MenuItem>
@@ -102,7 +104,7 @@ function MainNavigation() {
                             flexDirection: 'row-reverse',
                             marginRight: 5,
                         }}>
-                            {links.map((link) => (
+                            {menu.map((link) => (
                                 <Button
                                     key={link}
                                     onClick={handleCloseNavMenu}
