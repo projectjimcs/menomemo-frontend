@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 
-export function verifyAuth(req: NextRequest, role: string | null = null) {
+export function verifyAuth(req: NextRequest, roles: string[] | null = null) {
   let response: NextResponse;
 
   return fetch(`${process.env.BASE_URL}/auth`, {
@@ -14,7 +14,7 @@ export function verifyAuth(req: NextRequest, role: string | null = null) {
       const data = await res.json();
       const user = data.user;
 
-      if (role && user.usertype !== role) {
+      if (roles && !roles.includes(user.usertype)) {
         response = NextResponse.redirect('/login'); // !!! REDIRECT TO NOT AUTH, NOT LOGIN
       } else {
         response = NextResponse.next();
