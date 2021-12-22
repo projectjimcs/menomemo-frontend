@@ -1,16 +1,26 @@
 import FullCalendar from "@fullcalendar/react";
 import interactionPlugin from "@fullcalendar/interaction";
-import timeGridPlugin from "@fullcalendar/timegrid";
+import dayGridPlugin from '@fullcalendar/daygrid'
+import momentPlugin from '@fullcalendar/moment'
 import { useRef } from "react";
 
 function Calendar(props) {
   const calendarRef = useRef(null);
+  const { bookings } = props;
+
   return (
     <FullCalendar
       ref={calendarRef}
-      plugins={[timeGridPlugin, interactionPlugin]}
+      plugins={[momentPlugin, dayGridPlugin, interactionPlugin]}
       editable
       selectable
+      displayEventTime
+      events={bookings}
+      eventTimeFormat={{
+        hour: 'numeric',
+        minute: '2-digit',
+        meridiem: true,
+      }}
     />
   );
 }
