@@ -25,7 +25,6 @@ function Dashboard(props) {
   }
 
   function formatBookings(bookings) {
-    // console.log(bookings)
     return bookings.map((booking) => {
       const bookingData = {
         id: booking.id.toString(),
