@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
+import Cookie from 'cookie';
 
 export function verifyAuth(req: NextRequest, roles: string[] | null = null) {
   let response: NextResponse;
