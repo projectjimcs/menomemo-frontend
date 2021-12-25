@@ -26,9 +26,14 @@ function Dashboard(props) {
 
   function formatBookings(bookings) {
     return bookings.map((booking) => {
+
       const bookingData = {
-        id: booking.id.toString(),
+        id: booking.id,
         title: booking.title,
+        extendedProps: {
+          notes: booking.notes,
+          isCompleted: booking.isCompleted,
+        }
       }
 
       if (booking.startTime) {
