@@ -19,7 +19,7 @@ function MainNavigation() {
     const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
     const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
     const { menu } = useMenu();
-  
+    console.log(menu)
     const handleOpenNavMenu = (event: MouseEvent<HTMLElement>) => {
       setAnchorElNav(event.currentTarget);
     };
@@ -116,7 +116,9 @@ function MainNavigation() {
                         </Box>
 
                         {/* User Specific Menu */}
-                        <Box sx={{ flexGrow: 0 }}>
+                        {
+                          !menu.includes('login') && // !!! change this in future, dumb way
+                          <Box sx={{ flexGrow: 0 }}>
                             <Tooltip title="Open settings">
                             <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
                                 AB
@@ -144,7 +146,8 @@ function MainNavigation() {
                                     </MenuItem>
                                 ))}
                             </Menu>
-                        </Box>
+                      </Box>
+                        }
                     </Toolbar>
                 </Container>
             </AppBar>

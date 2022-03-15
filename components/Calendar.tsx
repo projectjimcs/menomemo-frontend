@@ -15,14 +15,20 @@ import DatePicker from '@mui/lab/DatePicker';
 import TimePicker from '@mui/lab/TimePicker';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import InputLabel from '@mui/material/InputLabel';
+import FormControl from '@mui/material/FormControl';
 
 function Calendar(props) {
   const isFirstUpdate = useRef(true);
   const calendarRef = useRef(null);
-  const { bookings } = props;
+  const { bookings, patients, doctors } = props;
   const [open, setOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState({});
-  const [editView, setEditView] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState('');
+  const [selectedDoctor, setSelectedDoctor] = useState('');
+  const [mode, setMode] = useState('');
   const [date, setDate] = useState<Moment | null>(null);
   const [startTime, setStartTime] = useState<Moment | null>(null);
   const [endTime, setEndTime] = useState<Moment | null>(null);
@@ -45,7 +51,16 @@ function Calendar(props) {
 
   function closeBooking() {
     setOpen(false);
-    setEditView(false);
+    setMode('');
+    setDate(null);
+    setStartTime(null);
+    setEndTime(null);
+    setAllDay(false);
+    setTitle('');
+    setNotes('');
+    setCompleted(false);
+    setSelectedPatient('');
+    setSelectedDoctor('');
   }
 
   function handleBookingClick(booking) {
@@ -64,7 +79,7 @@ function Calendar(props) {
       notes: bookingData.extendedProps.notes,
       completed: bookingData.extendedProps.isCompleted,
     }
-
+    console.log(formattedBooking)
     setTitle(formattedBooking.title);
     setNotes(formattedBooking.notes);
     setDate(parsedStart);
@@ -72,29 +87,72 @@ function Calendar(props) {
     setEndTime(parsedEnd);
     setAllDay(formattedBooking.isAllDay);
     setCompleted(formattedBooking.completed);
-    setSelectedBooking(formattedBooking);
+    setSelectedBooking(bookingData);
   }
 
   function handleEditClick() {
-    setEditView(true);
+    setMode('edit');
   }
 
-  async function handleEditSubmit() {
+  async function handleSubmit() {
+    let url = '/bookings'
+    let response;
+
+    if (mode === 'edit') {
+      url += `/${selectedBooking.id}`;
+    }
+
+    const sendData = {
+      title: title,
+      notes: notes,
+      date: date?.format('YYYY-MM-DD'),
+      startTime: startTime?.format('HH:mm:ss'),
+      endTime: endTime?.format('HH:mm:ss'),
+      isAllDay: allDay,
+      isCompleted: completed,
+      patient: selectedPatient,
+      doctor: selectedDoctor,
+    };
+
     try {
-      const response = await axiosConfig.put(`/bookings/${selectedBooking.id}`, {
-        title: title,
-        notes: notes,
-        date: date?.format('YYYY-MM-DD'),
-        startTime: startTime?.format('HH:mm:ss'),
-        endTime: endTime?.format('HH:mm:ss'),
-        isAllDay: allDay,
-        isCompleted: completed,
-      });
+      if (mode === 'edit') {
+        response = await axiosConfig.put(url, sendData);
+      } else {
+        response = await axiosConfig.post(url, sendData);
+      }
 
       console.log(response)
+      if (response.statusText === 'OK' || response.statusText === 'Created') {
+        const updatedBooking = response.data;
+
+        // !!! God awful way, need to change later because it's having to
+        // grab all bookings and loop through each update
+        props.fetchBookings();
+        closeBooking();
+      }
+
     } catch (err) {
-      console.log('Error in updating booking');
+      console.log(err)
+      console.log('Error in add/update booking');
     }
+  }
+
+  function handleDateClick(event) {
+    const parsedDate = moment(event.date);
+    console.log(parsedDate)
+    console.log('date click event')
+    console.log(event)
+    setMode('add');
+    setDate(parsedDate);
+    setOpen(true);
+  }
+
+  function handlePatientChange(event) {
+    setSelectedPatient(event.target.value);
+  }
+
+  function handleDoctorChange(event) {
+    setSelectedDoctor(event.target.value);
   }
 
   return (
@@ -111,6 +169,7 @@ function Calendar(props) {
           meridiem: true,
         }}
         eventClick={handleBookingClick}
+        dateClick={handleDateClick}
       />
 
       <Modal
@@ -129,17 +188,17 @@ function Calendar(props) {
           p: 4,
         }}>
           {
-            editView ?
+            mode ?
             (
               <Fragment>
                 <Typography id="modal-modal-title" variant="h6">
-                  Edit Booking
+                  {`${mode === 'add' ? 'Add' : 'Edit'} Booking`}
                 </Typography>
                 <TextField
                   id="title-field"
                   label="Title"
                   variant="outlined"
-                  defaultValue={selectedBooking.title}
+                  defaultValue={title}
                   onChange={(e) => {
                     setTitle(e.target.value);
                   }}
@@ -182,11 +241,44 @@ function Calendar(props) {
                   id="notes-field"
                   label="Notes"
                   variant="outlined"
-                  defaultValue={selectedBooking.notes}
+                  multiline
+                  defaultValue={notes}
                   onChange={(e) => {
                     setNotes(e.target.value);
                   }}
                 />
+                <FormControl fullWidth>
+                  <InputLabel id="patient-select-label">Patient Select</InputLabel>
+                  <Select
+                    labelId="patient-select-label"
+                    id="patient-select"
+                    value={selectedPatient}
+                    label="Patient Select"
+                    onChange={handlePatientChange}
+                  >
+                    {
+                      patients.map((patient) => {
+                        return <MenuItem value={patient.uuid}>{`${patient.firstname} ${patient.lastname}`}</MenuItem>
+                      })
+                    }
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth>
+                  <InputLabel id="doctor-select-label">Doctor Select</InputLabel>
+                  <Select
+                    labelId="doctor-select-label"
+                    id="doctor-select"
+                    value={selectedDoctor}
+                    label="Doctor Select"
+                    onChange={handleDoctorChange}
+                  >
+                    {
+                      doctors.map((doctor) => {
+                        return <MenuItem value={doctor.uuid}>{`${doctor.firstname} ${doctor.lastname}`}</MenuItem>
+                      })
+                    }
+                  </Select>
+                </FormControl>
                 <div>
                   <FormControlLabel control={
                     <Checkbox
@@ -203,16 +295,16 @@ function Calendar(props) {
             (
               <Fragment>
                 <Typography id="modal-modal-title" variant="h6">
-                {selectedBooking.title}
+                  {title}
                 </Typography>
                 <Typography id="modal-modal-date" variant="subtitle1">
-                  {selectedBooking.bookingDate}
+                  {date?.format('MMMM Do, YYYY')}
                 </Typography>
                 <Typography id="modal-modal-time" variant="subtitle2">
-                  {selectedBooking.isAllDay ? 'All Day' : `${selectedBooking.startTime} - ${selectedBooking.endTime || 'TBD'}`}
+                  {allDay ? 'All Day' : `${startTime?.format('h:mm A')} - ${endTime?.format('h:mm A') || 'TBD'}`}
                 </Typography>
                 <Typography id="modal-modal-description" variant="body2">
-                  Notes: {selectedBooking.notes || 'N/A'}
+                  Notes: {notes || 'N/A'}
                 </Typography>
               </Fragment>
             )
@@ -226,9 +318,9 @@ function Calendar(props) {
             </Button>
             <Button
               variant="contained"
-              onClick={editView ? handleEditSubmit : handleEditClick}
+              onClick={mode ? handleSubmit : handleEditClick}
             >
-              {editView ? 'Submit' : 'Edit'}
+              {mode ? 'Submit' : 'Edit'}
             </Button>
           </div>
         </Box>
