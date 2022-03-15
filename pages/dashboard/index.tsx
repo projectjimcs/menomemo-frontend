@@ -7,6 +7,8 @@ import axiosConfig from '../../axiosConfig';
 
 function Dashboard(props) {
   const [bookings, setBookings] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState([]);
   const { changeMenu } = useMenu();
 
   async function fetchBookings() {
@@ -19,14 +21,56 @@ function Dashboard(props) {
         setBookings(formattedBookings);
       }
     } catch (err) {
-      console.log('errored out')
+      console.log('errored out on fetching bookings')
       console.log(err)
     }
   }
 
+  // !!! Very similar to fetch bookings maybe combine?
+  async function fetchPatients() {
+    try {
+      const data = await axiosConfig.get('/patients');
+
+      if (data.statusText == 'OK') {
+        const formattedPatients = formatPatients(data.data);
+
+        setPatients(formattedPatients);
+      }
+    } catch (err) {
+      console.log('errored out on patient fetching');
+      console.log(err)
+    }
+  }
+
+  // !!! Very similar to fetch bookings/patients maybe combine?
+  async function fetchDoctors() {
+    try {
+      const data = await axiosConfig.get('user/doctors');
+
+      if (data.statusText == 'OK') {
+        setDoctors(data.data);
+      }
+    } catch (err) {
+      console.log('errored out on doctors fetching');
+      console.log(err)
+    }
+  }
+
+  function formatPatients(patients) {
+    return patients.map((patient) => {
+      return {
+        uuid: patient.uuid,
+        companyId: patient.companyId,
+        firstname: patient.firstname,
+        lastname: patient.lastname,
+        email: patient.email,
+        phone: patient.phone,
+      };
+    });
+  }
+
   function formatBookings(bookings) {
     return bookings.map((booking) => {
-
       const bookingData = {
         id: booking.id,
         title: booking.title,
@@ -54,6 +98,8 @@ function Dashboard(props) {
   useEffect(() => {
     changeMenu(props.menuType);
     fetchBookings();
+    fetchPatients();
+    fetchDoctors();
   }, []);
 
   return (
@@ -65,11 +111,18 @@ function Dashboard(props) {
       }}
     >
       <Grid item xs={3}>
-        Small
+        {
+          doctors.map(doctor => {
+            return <div>{`${doctor.firstname} ${doctor.lastname}`}</div>;
+          })
+        }
       </Grid>
       <Grid item xs={9}>
         <Calendar
           bookings={bookings}
+          patients={patients}
+          doctors={doctors}
+          fetchBookings={fetchBookings}
         />
       </Grid>
     </Grid>
